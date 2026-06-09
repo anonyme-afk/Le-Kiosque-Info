@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firewall Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background: #f4f4f5;
+            color: #18181b;
+        }
+        h1 {
+            color: #27272a;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        table, th, td {
+            border: 1px solid #e4e4e7;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #f8fafc;
+        }
+        .status-success {
+            color: #16a34a;
+            font-weight: bold;
+        }
+        .status-error {
+            color: #dc2626;
+            font-weight: bold;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid #e4e4e7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Pare-feu Scolaire - Diagnostic</h1>
+        <p>Référence DNS : <strong>89.234.186.18</strong></p>
+        <p>Ce test simule l'accès aux domaines distants utilisés par le catalogue (requêtes no-cors + timeout 2s).</p>
+        
+        <table id="testTable">
+            <thead>
+                <tr>
+                    <th>URL / Domaine</th>
+                    <th>Statut</th>
+                    <th>Temps de réponse</th>
+                </tr>
+            </thead>
+            <tbody id="testBody">
+                <!-- Test rows will be injected here -->
+            </tbody>
+        </table>
+        
+        <div class="summary" id="summaryBox" style="display: none;">
+            <h3>Résumé (estimation depuis ce réseau) :</h3>
+            <ul>
+                <li><strong>Jeux Couche 1 (Auto-hébergés) :</strong> <span id="c1Count"></span>/10 toujours visibles (100%).</li>
+                <li><strong>Jeux Couche 2 (Externes) :</strong> <span id="c2Count"></span>/<span id="c2Total"></span> passeront sur ce réseau.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const DOMAINS_TO_TEST = [
+            "https://bloxd.io/",
+            "https://voxiom.io/",
+            "https://vectaria.io/",
+            "https://shellshock.io/",
+            "https://venge.io/",
+            "https://slither.com/io",
+            "https://agar.io/",
+            "https://games.crazygames.com/en_US/madalin-stunt-cars-3/index.html",
+            "https://orteil.dashnet.org/cookieclicker/",
+            "https://gartic.io/",
+            "https://skribbl.io/",
+            "https://html5.gamedistribution.com/b9de400490b44616860101b0f19d27f8/",
+            "https://html5.gamedistribution.com/1cead60505b34beaa0171221f72cf724/",
+            "https://html5.gamedistribution.com/dcb4076ab65c401eb12b6ccf515cae4c/",
+            "https://html5.gamedistribution.com/a6f69ad9d48b4d8da075e1ec9fcb3fc2/",
+            "https://html5.gamedistribution.com/7ec57b98a00f4f9f83610996887aef2b/",
+            "https://html5.gamedistribution.com/ce41bcccfb8444a6b2518b56f8f041ff/",
+            "https://html5.gamedistribution.com/9783f982ea124e4d8fbcf2fb93d7c35f/",
+            "https://archive.org/embed/msdos_Doom_1993",
+            "https://classic.minecraft.net/",
+            "https://archive.org/embed/msdos_Quake_1996",
+            "https://www.lexaloffle.com/bbs/widget.php?pid=celeste",
+            "https://www.cross-code.com/en/start"
+        ];
+
+        let successCount = 0;
+        let totalCount = DOMAINS_TO_TEST.length;
+        
+        async function testUrl(url) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+            const start = performance.now();
+            
+            try {
+                await fetch(url, {
+                    mode: 'no-cors',
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
+                const end = performance.now();
+                return { success: true, time: (end - start).toFixed(0) };
+            } catch (error) {
+                clearTimeout(timeoutId);
+                return { success: false, time: null };
+            }
+        }
+
+        async function runTests() {
+            const tbody = document.getElementById('testBody');
+            
+            for (let url of DOMAINS_TO_TEST) {
+                const tr = document.createElement('tr');
+                
+                const tdUrl = document.createElement('td');
+                tdUrl.textContent = url;
+                tr.appendChild(tdUrl);
+                
+                const tdStatus = document.createElement('td');
+                tdStatus.textContent = 'En cours...';
+                tr.appendChild(tdStatus);
+                
+                const tdTime = document.createElement('td');
+                tdTime.textContent = '-';
+                tr.appendChild(tdTime);
+                
+                tbody.appendChild(tr);
+                
+                const result = await testUrl(url);
+                
+                if (result.success) {
+                    tdStatus.innerHTML = '<span class="status-success">✓ Accessible</span>';
+                    tdTime.textContent = result.time + ' ms';
+                    successCount++;
+                } else {
+                    tdStatus.innerHTML = '<span class="status-error">✗ Bloqué / Timeout</span>';
+                    tdTime.textContent = 'N/A';
+                }
+            }
+            
+            document.getElementById('c1Count').textContent = 10;
+            document.getElementById('c2Count').textContent = successCount;
+            document.getElementById('c2Total').textContent = totalCount;
+            document.getElementById('summaryBox').style.display = 'block';
+        }
+
+        runTests();
+    </script>
+</body>
+</html>

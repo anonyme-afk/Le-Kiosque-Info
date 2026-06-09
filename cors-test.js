@@ -1,0 +1,1 @@
+fetch("https://catalog.api.gamedistribution.com/api/v2.0/rss/All/?collection=all&categories=All&type=all&subType=all&amount=40&page=1&format=json", {method:"HEAD"}).then(r => console.log(r.headers.get("access-control-allow-origin")))

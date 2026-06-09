@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pac-Man</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:'Courier New',monospace;overflow:hidden;touch-action:none}
+#wrap{position:relative;display:flex;flex-direction:column;align-items:center}
+#hud{display:flex;justify-content:space-between;padding:8px 0;color:#fff;font-size:16px}
+.lives{color:#ffff00}
+canvas{display:block}
+#overlay{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,.75);z-index:10}
+#overlay.hidden{display:none}
+.otitle{font-size:48px;color:#ffff00;margin-bottom:20px}
+.osub{font-size:18px;color:#fff;margin-top:10px}
+.ogameover{font-size:40px;color:#f00;margin-bottom:10px}
+.oscore{font-size:22px;color:#fff;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="hud">
+    <div>SCORE: <span id="sc">0</span></div>
+    <div class="lives">LIVES: <span id="lv"></span></div>
+  </div>
+  <canvas id="c"></canvas>
+  <div id="overlay">
+    <div class="otitle">PAC-MAN</div>
+    <div class="osub">Press any key or tap to start</div>
+  </div>
+</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('overlay');
+const T = 16, COLS = 28, ROWS = 31;
+canvas.width = COLS * T;
+canvas.height = ROWS * T;
+document.getElementById('hud').style.width = canvas.width + 'px';
+
+const DX = [1,0,-1,0], DY = [0,1,0,-1];
+const SPEED = 2;
+
+// === AUDIO (Web Audio API) ===
+let actx = null, audioReady = false;
+let sirenOsc = null, sirenGain = null, sirenLfo = null;
+let wakaHigh = true;
+
+function initAudio() {
+  if (actx) return;
+  actx = new (window.AudioContext || window.webkitAudioContext)();
+  audioReady = true;
+}
+
+function playTone(freq, dur, type, vol, delay) {
+  if (!audioReady) return;
+  const t = actx.currentTime + (delay || 0);
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = type || 'square';
+  o.frequency.setValueAtTime(freq, t);
+  g.gain.setValueAtTime(vol || 0.08, t);
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + dur);
+}
+
+function playWaka() {
+  if (!audioReady) return;
+  const f = wakaHigh ? 490 : 375;
+  wakaHigh = !wakaHigh;
+  const t = actx.currentTime;
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = 'triangle';
+  o.frequency.setValueAtTime(f, t);
+  o.frequency.linearRampToValueAtTime(f * 0.7, t + 0.07);
+  g.gain.setValueAtTime(0.12, t);
+  g.gain.linearRampToValueAtTime(0, t + 0.07);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + 0.08);
+}
+
+function playPowerPellet() {
+  if (!audioReady) return;
+  for (let i = 0; i < 4; i++) {
+    playTone(200 + i * 80, 0.12, 'square', 0.07, i * 0.08);
+  }
+}
+
+function playEatGhost() {
+  if (!audioReady) return;
+  const t = actx.currentTime;
+  const o = actx.createOscillator();
+  const g = actx.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(200, t);
+  o.frequency.exponentialRampToValueAtTime(1600, t + 0.25);
+  g.gain.setValueAtTime(0.1, t);
+  g.gain.linearRampToValueAtTime(0, t + 0.3);
+  o.connect(g); g.connect(actx.destination);
+  o.start(t); o.stop(t + 0.3);
+}
+
+function playDeath() {
+  if (!audioReady) return;
+  stopSiren();
+  const notes = [523,493,466,440,415,392,370,349,330,311,294,277,261,220,185,147];
+  notes.forEach((f, i) => {
+    playTone(f, 0.1, 'square', 0.09, i * 0.07);
+  });
+}
+
+function playIntro() {
+  if (!audioReady) return;
+  // Classic Pac-Man intro approximation
+  const melody = [
+    [262,0.12],[330,0.12],[392,0.12],[523,0.18],
+    [392,0.12],[523,0.32],
+  ];
+  let t = 0;
+  melody.forEach(([f, d]) => {
+    playTone(f, d * 0.9, 'square', 0.08, t);
+    t += d;
+  });
+  // Second phrase
+  const m2 = [
+    [247,0.12],[311,0.12],[370,0.12],[494,0.18],
+    [370,0.12],[494,0.32],
+  ];
+  m2.forEach(([f, d]) => {
+    playTone(f, d * 0.9, 'square', 0.08, t);
+    t += d;
+  });
+  // Third phrase
+  const m3 = [
+    [262,0.12],[330,0.12],[392,0.12],[523,0.18],
+    [392,0.12],[523,0.12],[659,0.12],[784,0.12],
+    [659,0.12],[523,0.5],
+  ];
+  m3.forEach(([f, d]) => {
+    playTone(f, d * 0.9, 'square', 0.08, t);
+    t += d;
+  });
+}
+
+function startSiren(frightened) {
+  if (!audioReady) return;
+  stopSiren();
+  sirenOsc = actx.createOscillator();
+  sirenGain = actx.createGain();
+  sirenLfo = actx.createOscillator();
+  const lfoGain = actx.createGain();
+
+  if (frightened) {
+    sirenOsc.type = 'sine';
+    sirenOsc.frequency.setValueAtTime(120, actx.currentTime);
+    sirenLfo.frequency.setValueAtTime(8, actx.currentTime);
+    lfoGain.gain.setValueAtTime(40, actx.currentTime);
+    sirenGain.gain.setValueAtTime(0.06, actx.currentTime);
+  } else {
+    sirenOsc.type = 'sine';
+    sirenOsc.frequency.setValueAtTime(300, actx.currentTime);
+    sirenLfo.frequency.setValueAtTime(3, actx.currentTime);
+    lfoGain.gain.setValueAtTime(100, actx.currentTime);
+    sirenGain.gain.setValueAtTime(0.04, actx.currentTime);
+  }
+
+  sirenLfo.connect(lfoGain);
+  lfoGain.connect(sirenOsc.frequency);
+  sirenOsc.connect(sirenGain);
+  sirenGain.connect(actx.destination);
+  sirenLfo.start(); sirenOsc.start();
+}
+
+function stopSiren() {
+  try { sirenOsc && sirenOsc.stop(); } catch(e) {}
+  try { sirenLfo && sirenLfo.stop(); } catch(e) {}
+  sirenOsc = null; sirenLfo = null; sirenGain = null;
+}
+
+function playLevelComplete() {
+  if (!audioReady) return;
+  stopSiren();
+  for (let i = 0; i < 8; i++) {
+    playTone(523 + i * 60, 0.15, 'square', 0.08, i * 0.12);
+  }
+}
+
+const MAP0 = [
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+[1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
+[1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+[1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+[1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+[1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+[0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+[0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+[0,0,0,0,0,1,2,1,1,0,1,1,1,4,4,1,1,1,0,1,1,2,1,0,0,0,0,0],
+[1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+[0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+[1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+[0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+[0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+[0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+[1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+[1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+[1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+[1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1],
+[1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+[1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+[1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+[1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+[1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+[1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+];
+
+let map, score, lives, level, totalPellets, pelletsEaten;
+let state = 'start';
+let frame = 0, frightTimer = 0, ghostCombo = 0;
+let modeTimer = 0, ghostMode = 'scatter';
+
+// Pac-Man
+let pm = {tx:14,ty:23,px:0,py:0,dir:2,nextDir:-1,moving:false,mouth:0.2,mouthDir:1};
+
+// Ghosts
+const GCOL = {blinky:'#ff0000',pinky:'#ffb8ff',inky:'#00ffff',clyde:'#ffb852'};
+const GSCAT = {blinky:{x:25,y:-3},pinky:{x:2,y:-3},inky:{x:27,y:34},clyde:{x:0,y:34}};
+let ghosts = [];
+
+function walkable(x, y, eaten) {
+  if (y < 0 || y >= ROWS) return false;
+  if (x < 0 || x >= COLS) return true;
+  const t = map[y][x];
+  if (t === 1) return false;
+  if (t === 4 && !eaten) return false;
+  return true;
+}
+
+function canGo(x, y, d, eaten) {
+  let nx = x + DX[d], ny = y + DY[d];
+  if (nx < 0) nx = COLS - 1;
+  if (nx >= COLS) nx = 0;
+  return walkable(nx, ny, eaten);
+}
+
+function initMap() {
+  map = MAP0.map(r => [...r]);
+  totalPellets = 0; pelletsEaten = 0;
+  for (let r = 0; r < ROWS; r++)
+    for (let c = 0; c < COLS; c++)
+      if (map[r][c] === 2 || map[r][c] === 3) totalPellets++;
+}
+
+function mkGhost(name, x, y, delay) {
+  return {name,color:GCOL[name],tx:x,ty:y,px:x*T,py:y*T,
+    dir:0,frightened:false,eaten:false,
+    inHouse:delay>0,delay,timer:delay,homeTx:x,homeTy:y};
+}
+
+function resetPos() {
+  pm.tx=14;pm.ty=23;pm.px=14*T;pm.py=23*T;
+  pm.dir=2;pm.nextDir=-1;pm.moving=false;pm.mouth=0.2;
+  ghosts = [
+    mkGhost('blinky',14,11,0),
+    mkGhost('pinky',14,14,90),
+    mkGhost('inky',12,14,210),
+    mkGhost('clyde',16,14,360)
+  ];
+  ghosts[0].inHouse = false;
+  modeTimer=0; frightTimer=0; ghostCombo=0; ghostMode='scatter';
+}
+
+function startGame() {
+  initAudio();
+  score=0; lives=3; level=1;
+  initMap(); resetPos();
+  state='playing';
+  overlay.classList.add('hidden');
+  playIntro();
+  setTimeout(()=>{ if(state==='playing') startSiren(false); }, 2500);
+}
+
+function ghostTarget(g) {
+  if (g.eaten) return {x:14,y:11};
+  if (g.frightened) return {x:Math.random()*COLS|0,y:Math.random()*ROWS|0};
+  if (g.mode === 'scatter') return GSCAT[g.name];
+  switch(g.name) {
+    case 'blinky': return {x:pm.tx,y:pm.ty};
+    case 'pinky': return {x:pm.tx+DX[pm.dir]*4,y:pm.ty+DY[pm.dir]*4};
+    case 'inky': {
+      const b=ghosts[0];
+      const ax=pm.tx+DX[pm.dir]*2, ay=pm.ty+DY[pm.dir]*2;
+      return {x:ax+(ax-b.tx),y:ay+(ay-b.ty)};
+    }
+    case 'clyde': {
+      const dx=g.tx-pm.tx,dy=g.ty-pm.ty;
+      return dx*dx+dy*dy>64?{x:pm.tx,y:pm.ty}:GSCAT.clyde;
+    }
+  }
+  return {x:pm.tx,y:pm.ty};
+}
+
+function chooseDir(g) {
+  const tgt = ghostTarget(g);
+  const rev = (g.dir+2)%4;
+  let best=-1, bestD=Infinity;
+  for (let d=0;d<4;d++) {
+    if (d===rev) continue;
+    let nx=g.tx+DX[d], ny=g.ty+DY[d];
+    if(nx<0)nx=COLS-1; if(nx>=COLS)nx=0;
+    if(!walkable(nx,ny,g.eaten)) continue;
+    const dist=(nx-tgt.x)**2+(ny-tgt.y)**2;
+    if(dist<bestD){bestD=dist;best=d;}
+  }
+  if(best===-1) best=rev; // dead end fallback
+  return best;
+}
+
+function updatePacman() {
+  if (pm.px%T===0 && pm.py%T===0) {
+    pm.tx=pm.px/T; pm.ty=pm.py/T;
+    // tunnel wrap
+    if(pm.tx<0){pm.tx=COLS-1;pm.px=pm.tx*T;}
+    if(pm.tx>=COLS){pm.tx=0;pm.px=0;}
+    // eat
+    const tile=map[pm.ty]&&map[pm.ty][pm.tx];
+    if(tile===2){map[pm.ty][pm.tx]=0;score+=10;pelletsEaten++;playWaka();}
+    else if(tile===3){map[pm.ty][pm.tx]=0;score+=50;pelletsEaten++;playPowerPellet();activateFright();}
+    if(pelletsEaten>=totalPellets){
+      state='levelcomplete';playLevelComplete();
+      setTimeout(()=>{level++;initMap();resetPos();state='playing';startSiren(false);},2000);
+      return;
+    }
+    // direction
+    if(pm.nextDir>=0 && canGo(pm.tx,pm.ty,pm.nextDir,false)){
+      pm.dir=pm.nextDir; pm.moving=true;
+    } else if(pm.moving && canGo(pm.tx,pm.ty,pm.dir,false)){
+      // keep going
+    } else {
+      pm.moving=false;
+    }
+  }
+  if(!pm.moving) return;
+  pm.px+=DX[pm.dir]*SPEED;
+  pm.py+=DY[pm.dir]*SPEED;
+  // mouth
+  pm.mouth+=0.06*pm.mouthDir;
+  if(pm.mouth>0.35)pm.mouthDir=-1;
+  if(pm.mouth<0.02)pm.mouthDir=1;
+}
+
+function activateFright() {
+  frightTimer=360; ghostCombo=0;
+  ghosts.forEach(g=>{
+    if(!g.eaten&&!g.inHouse){g.frightened=true;g.dir=(g.dir+2)%4;}
+  });
+  startSiren(true);
+}
+
+function updateGhosts() {
+  modeTimer++;
+  if(modeTimer<420)ghostMode='scatter';
+  else if(modeTimer<1620)ghostMode='chase';
+  else if(modeTimer<2040)ghostMode='scatter';
+  else ghostMode='chase';
+
+  if(frightTimer>0){frightTimer--;if(frightTimer<=0){ghosts.forEach(g=>{g.frightened=false;});startSiren(false);}}
+
+  ghosts.forEach(g=>{
+    if(g.inHouse){
+      g.timer--;
+      if(g.timer<=0){
+        g.inHouse=false;g.tx=14;g.ty=11;g.px=14*T;g.py=11*T;
+        g.dir=chooseDir(g);
+      }
+      return;
+    }
+    g.mode=ghostMode;
+    const spd=g.eaten?4:(g.frightened?1:SPEED);
+    g.px+=DX[g.dir]*spd;
+    g.py+=DY[g.dir]*spd;
+
+    if(g.px%T===0 && g.py%T===0){
+      g.tx=g.px/T; g.ty=g.py/T;
+      if(g.tx<0){g.tx=COLS-1;g.px=g.tx*T;}
+      if(g.tx>=COLS){g.tx=0;g.px=0;}
+      if(g.eaten && g.tx===14 && g.ty===11){
+        g.eaten=false;g.frightened=false;
+      }
+      g.dir=chooseDir(g);
+    }
+    // collision
+    const dx=Math.abs(g.px-pm.px),dy=Math.abs(g.py-pm.py);
+    if(dx<T*0.7&&dy<T*0.7){
+      if(g.frightened&&!g.eaten){
+        g.eaten=true;g.frightened=false;
+        ghostCombo++;score+=200*Math.pow(2,ghostCombo-1);playEatGhost();
+      } else if(!g.eaten){
+        doPacDeath();
+      }
+    }
+  });
+}
+
+function doPacDeath() {
+  lives--;
+  playDeath();
+  if(lives<=0){
+    state='gameover';
+    overlay.classList.remove('hidden');
+    overlay.innerHTML='<div class="ogameover">GAME OVER</div><div class="oscore">Score: '+score+'</div><div class="osub">Press any key or tap to restart</div>';
+  } else {
+    state='dying';
+    setTimeout(()=>{resetPos();state='playing';startSiren(false);},1200);
+  }
+}
+
+// === DRAWING ===
+function drawMap() {
+  for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++){
+    const t=map[r][c], x=c*T, y=r*T;
+    if(t===1){
+      ctx.fillStyle='#2121de';
+      ctx.fillRect(x,y,T,T);
+    } else if(t===4){
+      ctx.fillStyle='#ffb8ff';
+      ctx.fillRect(x,y+6,T,3);
+    } else if(t===2){
+      ctx.fillStyle='#ffb8ae';
+      ctx.beginPath();ctx.arc(x+T/2,y+T/2,2,0,Math.PI*2);ctx.fill();
+    } else if(t===3){
+      ctx.fillStyle='#ffb8ae';
+      ctx.beginPath();
+      ctx.arc(x+T/2,y+T/2,5+Math.sin(frame*0.1)*1.5,0,Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
+function drawPacman() {
+  const cx=pm.px+T/2, cy=pm.py+T/2, r=T/2-1;
+  const mouth=pm.mouth*Math.PI;
+  const ang=[0,Math.PI/2,Math.PI,-Math.PI/2][pm.dir];
+  ctx.fillStyle='#ffff00';
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,ang+mouth,ang+Math.PI*2-mouth);
+  ctx.lineTo(cx,cy);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawGhost(g) {
+  let cx,cy;
+  if(g.inHouse){cx=g.homeTx*T+T/2;cy=g.homeTy*T+T/2;}
+  else{cx=g.px+T/2;cy=g.py+T/2;}
+  const r=T/2-1;
+
+  if(g.eaten&&!g.inHouse){drawEyes(cx,cy,g.dir);return;}
+
+  const flash=g.frightened&&frightTimer<120&&((frame/8|0)%2===0);
+  ctx.fillStyle=g.frightened?(flash?'#fff':'#2121de'):g.color;
+  ctx.beginPath();
+  ctx.arc(cx,cy-2,r,Math.PI,0);
+  ctx.lineTo(cx+r,cy+r-2);
+  // wavy bottom
+  const w=r*2/3;
+  for(let i=2;i>=0;i--){
+    const bx=cx-r+w*i+w/2;
+    ctx.lineTo(bx,cy+r-2-(i%2===0?4:0));
+    ctx.lineTo(cx-r+w*i,cy+r-2);
+  }
+  ctx.closePath();ctx.fill();
+
+  if(g.frightened){
+    const ec=flash?'#f00':'#fff';
+    ctx.fillStyle=ec;
+    ctx.fillRect(cx-4,cy-4,2,2);ctx.fillRect(cx+2,cy-4,2,2);
+    ctx.strokeStyle=ec;ctx.lineWidth=1;ctx.beginPath();
+    ctx.moveTo(cx-5,cy+2);
+    for(let i=0;i<5;i++)ctx.lineTo(cx-5+i*2.5,cy+(i%2===0?2:0));
+    ctx.stroke();
+  } else {
+    drawEyes(cx,cy,g.dir);
+  }
+}
+
+function drawEyes(cx,cy,dir) {
+  const off=[[2,0],[0,2],[-2,0],[0,-2]];
+  const ox=off[dir][0],oy=off[dir][1];
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.ellipse(cx-4,cy-3,3,4,0,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.ellipse(cx+4,cy-3,3,4,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#00f';
+  ctx.beginPath();ctx.arc(cx-4+ox,cy-3+oy,1.5,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+4+ox,cy-3+oy,1.5,0,Math.PI*2);ctx.fill();
+}
+
+function drawHUD() {
+  document.getElementById('sc').textContent=score;
+  let s='';for(let i=0;i<lives;i++)s+='\u25CF ';
+  document.getElementById('lv').textContent=s;
+}
+
+function draw() {
+  ctx.fillStyle='#000';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  drawMap();
+  if(state==='playing'||state==='levelcomplete'||state==='dying'){
+    drawPacman();
+    ghosts.forEach(drawGhost);
+  }
+  drawHUD();
+  if(state==='levelcomplete'){
+    ctx.fillStyle='#ffff00';ctx.font='24px Courier New';ctx.textAlign='center';
+    ctx.fillText('LEVEL COMPLETE!',canvas.width/2,canvas.height/2);
+    ctx.textAlign='start';
+  }
+}
+
+function update() {
+  if(state!=='playing') return;
+  frame++;
+  updatePacman();
+  updateGhosts();
+}
+
+function loop(){update();draw();requestAnimationFrame(loop);}
+
+// INPUT
+document.addEventListener('keydown',e=>{
+  if(state==='start'||state==='gameover'){stopSiren();startGame();return;}
+  if(state!=='playing') return;
+  switch(e.key){
+    case'ArrowRight':case'd':case'D':pm.nextDir=0;e.preventDefault();break;
+    case'ArrowDown':case's':case'S':pm.nextDir=1;e.preventDefault();break;
+    case'ArrowLeft':case'a':case'A':pm.nextDir=2;e.preventDefault();break;
+    case'ArrowUp':case'w':case'W':pm.nextDir=3;e.preventDefault();break;
+  }
+});
+
+let tsx=0,tsy=0;
+document.addEventListener('touchstart',e=>{
+  if(state==='start'||state==='gameover'){stopSiren();startGame();return;}
+  tsx=e.touches[0].clientX;tsy=e.touches[0].clientY;e.preventDefault();
+},{passive:false});
+document.addEventListener('touchend',e=>{
+  if(state!=='playing') return;
+  const dx=e.changedTouches[0].clientX-tsx,dy=e.changedTouches[0].clientY-tsy;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;
+  pm.nextDir=Math.abs(dx)>Math.abs(dy)?(dx>0?0:2):(dy>0?1:3);
+  e.preventDefault();
+},{passive:false});
+
+// RESIZE
+function resize(){
+  const s=Math.min((innerWidth-20)/canvas.width,(innerHeight-60)/canvas.height,2);
+  canvas.style.width=canvas.width*s+'px';
+  canvas.style.height=canvas.height*s+'px';
+  document.getElementById('hud').style.width=canvas.width*s+'px';
+}
+addEventListener('resize',resize);
+
+// INIT & START LOOP
+initMap();
+resetPos();
+resize();
+loop();
+</script>
+</body>
+</html>

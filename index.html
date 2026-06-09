@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Le Kiosque Info — Actualités scolaires</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=Rajdhani:wght@500;600;700&family=Exo+2:wght@400;600;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --ink:#1a1a2e;--paper:#f5f0e8;--sepia:#e8dfc8;--accent:#c0392b;--muted:#7f8c8d;
+  --g1:#0f0f1a;--g2:#1a1a2e;--g3:#16213e;
+  --neon:#00f5d4;--neon2:#f72585;--neon3:#7209b7;--gold:#ffd60a;
+  --card:#1e1e35;--border:#2a2a4a;
+}
+
+/* ═══════════════════════════════════════
+   FACE 1 — NEWS
+═══════════════════════════════════════ */
+#face1{display:block;min-height:100vh;background:var(--paper);font-family:'Source Serif 4',Georgia,serif;color:var(--ink)}
+
+.news-header{
+  background:var(--ink);color:var(--paper);
+  padding:0 2rem;
+  border-bottom:4px solid var(--accent);
+}
+.news-header-top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 0 0.5rem;
+  border-bottom:1px solid rgba(245,240,232,0.15);
+}
+.logo-block{display:flex;align-items:baseline;gap:0.6rem}
+.logo-name{
+  font-family:'Playfair Display',serif;font-size:2.2rem;font-weight:900;
+  letter-spacing:-0.02em;color:var(--paper);
+  text-shadow:2px 2px 0 var(--accent);
+}
+.logo-sub{font-size:0.75rem;letter-spacing:0.15em;text-transform:uppercase;color:rgba(245,240,232,0.5);font-family:'Source Serif 4',serif;font-style:italic}
+.header-search{
+  display:flex;align-items:center;gap:0.4rem;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+  border-radius:4px;padding:0.4rem 0.7rem;
+}
+.header-search svg{opacity:0.5;flex-shrink:0}
+.header-search input{
+  background:transparent;border:none;outline:none;
+  color:var(--paper);font-family:inherit;font-size:0.85rem;width:160px;
+}
+.header-search input::placeholder{color:rgba(245,240,232,0.35)}
+.news-nav{
+  display:flex;gap:0;padding:0.4rem 0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.news-nav a{
+  color:rgba(245,240,232,0.7);text-decoration:none;
+  font-size:0.78rem;letter-spacing:0.08em;text-transform:uppercase;
+  padding:0.3rem 1rem;white-space:nowrap;
+  transition:color 0.2s;border-right:1px solid rgba(255,255,255,0.1);
+}
+.news-nav a:hover{color:var(--paper)}
+
+.date-bar{
+  background:var(--sepia);border-bottom:1px solid #d4c9b0;
+  padding:0.4rem 2rem;font-size:0.75rem;color:var(--muted);
+  letter-spacing:0.05em;display:flex;justify-content:space-between;align-items:center;
+}
+
+.news-main{max-width:1200px;margin:0 auto;padding:2rem}
+.section-label{
+  font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--accent);
+  font-weight:600;margin-bottom:1.2rem;display:flex;align-items:center;gap:0.8rem;
+  font-family:'Source Serif 4',serif;
+}
+.section-label::after{content:'';flex:1;height:1px;background:#d4c9b0}
+
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:3rem}
+@media(max-width:768px){.hero-grid{grid-template-columns:1fr}}
+
+.article-hero{cursor:default}
+.article-hero .thumb{
+  width:100%;aspect-ratio:16/9;background:#ccc;
+  margin-bottom:1rem;overflow:hidden;position:relative;
+}
+.article-hero .thumb-img{
+  width:100%;height:100%;object-fit:cover;
+}
+.article-hero .cat{
+  position:absolute;top:0.7rem;left:0.7rem;
+  background:var(--accent);color:#fff;
+  font-size:0.65rem;letter-spacing:0.12em;text-transform:uppercase;
+  padding:0.25rem 0.6rem;font-weight:600;font-family:'Source Serif 4',serif;
+}
+.article-hero h2{
+  font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:700;
+  line-height:1.3;margin-bottom:0.5rem;color:var(--ink);
+}
+.article-hero p{font-size:0.9rem;color:var(--muted);line-height:1.6}
+.article-meta{font-size:0.72rem;color:var(--muted);margin-top:0.6rem;letter-spacing:0.03em}
+.article-meta span{color:var(--ink);font-weight:600}
+
+.cards-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;margin-bottom:3rem}
+@media(max-width:900px){.cards-row{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.cards-row{grid-template-columns:1fr}}
+
+.article-card{cursor:default;border-bottom:2px solid var(--sepia);padding-bottom:1rem}
+.article-card .thumb-sm{
+  width:100%;aspect-ratio:4/3;
+  object-fit:cover;
+  background:#cbc2b5;
+  margin-bottom:0.7rem;position:relative;
+}
+.article-card .cat-sm{
+  font-size:0.62rem;letter-spacing:0.12em;text-transform:uppercase;
+  color:var(--accent);font-weight:600;margin-bottom:0.3rem;font-family:'Source Serif 4',serif;
+}
+.article-card h3{
+  font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;
+  line-height:1.35;color:var(--ink);margin-bottom:0.3rem;
+}
+.article-card p{font-size:0.8rem;color:var(--muted);line-height:1.5}
+
+.news-footer{
+  background:var(--ink);color:rgba(245,240,232,0.5);
+  padding:2rem;text-align:center;font-size:0.8rem;
+  border-top:4px solid var(--accent);
+  font-family:'Source Serif 4',serif;
+}
+.news-footer strong{color:var(--paper);font-family:'Playfair Display',serif}
+
+/* ═══════════════════════════════════════
+   FACE 2 — ARCADE
+═══════════════════════════════════════ */
+#face2{display:none;min-height:100vh;background:#0f1115;font-family:system-ui,-apple-system,sans-serif;color:#fff}
+
+.arc-header{
+  background:#181a20;
+  border-bottom:1px solid #2a2d35;
+  padding:0 2rem;position:sticky;top:0;z-index:100;
+}
+.arc-header-inner{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1rem 0;max-width:1400px;margin:0 auto;
+}
+.arc-logo{
+  font-weight:800;font-size:1.4rem;
+  letter-spacing:-0.02em;color:#fff;
+  display:flex;align-items:center;gap:0.6rem;
+}
+.arc-logo::before{
+  content:'';display:block;width:24px;height:24px;
+  background:#3b82f6;border-radius:6px;
+}
+.arc-cats{display:flex;gap:0.4rem;flex-wrap:wrap}
+.cat-btn{
+  background:transparent;border:1px solid #2a2d35;color:#8b92a5;
+  padding:0.35rem 0.9rem;border-radius:6px;font-size:0.8rem;cursor:pointer;
+  font-weight:500;transition:all 0.2s;
+}
+.cat-btn:hover,.cat-btn.active{
+  background:#2a2d35;color:#fff;border-color:#3b82f6;
+}
+.search-input {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  border: 1px solid #2a2d35;
+  padding: 0.35rem 0.9rem;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  outline: none;
+  min-width: 180px;
+  transition: all 0.2s ease;
+}
+.search-input:focus {
+  border-color: #3b82f6;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.arc-main{max-width:1400px;margin:0 auto;padding:2.5rem 2rem}
+.arc-title{
+  font-weight:600;font-size:1rem;color:#f3f4f6;
+  margin-bottom:1.5rem;display:flex;align-items:center;gap:1.5rem;
+}
+.arc-title::after{content:'';flex:1;height:1px;background:#2a2d35}
+
+.games-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:1.5rem;
+}
+@media(max-width:1100px){.games-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:700px){.games-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:400px){.games-grid{grid-template-columns:1fr}}
+
+.game-card{
+  background:#181a20;border:1px solid #2a2d35;
+  border-radius:10px;overflow:hidden;cursor:pointer;
+  transition:transform 0.2s,border-color 0.2s;
+  position:relative;display:flex;flex-direction:column;
+}
+.game-card:hover{
+  transform:translateY(-4px);border-color:#4b5563;
+}
+.game-thumb{
+  width:100%;aspect-ratio:16/10;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;overflow:hidden;
+}
+.game-thumb img{
+  width:100%;height:100%;object-fit:cover;
+  transition:transform 0.3s ease;
+}
+.fallback-thumb {
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg, #2a2d35, #111827);
+  color:#fff;font-weight:700;text-align:center;padding:1rem;font-size:1.2rem;
+  letter-spacing:0.05em;text-shadow:0 2px 8px rgba(0,0,0,0.4);
+}
+.local-badge {
+  position:absolute; top:0.5rem; right:0.5rem;
+  background:rgba(16, 185, 129, 0.9); color:#fff;
+  font-size:0.65rem; font-weight:600; padding:0.2rem 0.5rem;
+  border-radius:4px; z-index:10; pointer-events:none;
+  box-shadow:0 2px 4px rgba(0,0,0,0.3);
+}
+.game-card:hover .game-thumb img, .game-card:hover .fallback-thumb {transform:scale(1.05);}
+
+.game-info{padding:1rem;flex:1;display:flex;flex-direction:column;justify-content:space-between;}
+.game-name{
+  font-weight:600;font-size:0.95rem;margin-bottom:0.8rem;
+  color:#f3f4f6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.game-footer{display:flex;align-items:center;justify-content:space-between}
+.game-cat{
+  font-size:0.7rem;letter-spacing:0.05em;text-transform:uppercase;
+  padding:0.2rem 0.5rem;border-radius:4px;font-weight:600;
+  background:#2a2d35;color:#9ca3af;
+}
+.play-btn{
+  background:#3b82f6;color:#fff;border:none;border-radius:6px;
+  padding:0.4rem 1rem;font-size:0.8rem;font-weight:600;
+  cursor:pointer;transition:background 0.2s;
+}
+.play-btn:hover{background:#2563eb;}
+
+/* ─── IFRAME PANEL ─── */
+#game-panel{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:#000;flex-direction:column;
+}
+#game-panel.open{display:flex}
+.panel-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:#0a0a14;border-bottom:1px solid var(--border);
+  padding:0.6rem 1rem;flex-shrink:0;
+}
+.panel-title{
+  font-family:'Rajdhani',sans-serif;font-weight:600;font-size:1rem;
+  color:rgba(255,255,255,0.7);letter-spacing:0.08em;
+}
+.panel-btns{display:flex;gap:0.5rem}
+.panel-btn{
+  background:rgba(255,255,255,0.07);border:1px solid var(--border);
+  color:rgba(255,255,255,0.7);border-radius:8px;padding:0.4rem 0.8rem;
+  cursor:pointer;font-size:0.85rem;font-family:'Exo 2',sans-serif;
+  transition:all 0.2s;display:flex;align-items:center;gap:0.4rem;
+}
+.panel-btn:hover{background:rgba(255,255,255,0.12);color:#fff}
+.panel-btn.close-btn:hover{background:rgba(247,37,133,0.2);border-color:var(--neon2);color:var(--neon2)}
+#game-iframe{flex:1;border:none;width:100%;height:100%;background:#111}
+.iframe-error{
+  display:none;position:absolute;inset:0;
+  background:#0a0a14;align-items:center;justify-content:center;
+  flex-direction:column;gap:1rem;text-align:center;padding:2rem;
+  top:48px;
+}
+.iframe-error.visible{display:flex}
+.iframe-error p{color:rgba(255,255,255,0.5);font-size:1rem}
+.report-btn{
+  background:transparent;border:1px solid rgba(255,255,255,0.2);
+  color:rgba(255,255,255,0.4);border-radius:8px;padding:0.5rem 1.2rem;
+  cursor:pointer;font-family:'Exo 2',sans-serif;font-size:0.8rem;
+  transition:all 0.2s;
+}
+.report-btn:hover{border-color:rgba(255,255,255,0.4);color:rgba(255,255,255,0.7)}
+
+
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     FACE 1 — LE KIOSQUE INFO
+══════════════════════════════════════════ -->
+<div id="face1">
+  <header class="news-header">
+    <div class="news-header-top">
+      <div class="logo-block">
+        <span class="logo-name">Le Kiosque Info</span>
+        <span class="logo-sub">L'actualité qui compte</span>
+      </div>
+      <div class="header-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <input type="text" id="search-input" placeholder="Rechercher…" autocomplete="off" spellcheck="false">
+      </div>
+    </div>
+    <nav class="news-nav">
+      <a href="#">Accueil</a>
+      <a href="#">Vie scolaire</a>
+      <a href="#">Sciences</a>
+      <a href="#">Culture</a>
+      <a href="#">Sport</a>
+      <a href="#">Environnement</a>
+      <a href="#">International</a>
+      <a href="#">Numérique</a>
+    </nav>
+  </header>
+
+  <div class="date-bar">
+    <span>Jeudi 4 juin 2026</span>
+    <span>📌 Édition hebdomadaire — Numéro 214</span>
+  </div>
+
+  <main class="news-main">
+    <div class="section-label">À la une</div>
+    <div class="hero-grid">
+      <article class="article-hero">
+        <div class="thumb">
+          <img class="thumb-img" src="https://images.unsplash.com/photo-1434030216411-0b793f4b4173?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Éducation" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+          <span class="cat">Éducation</span>
+        </div>
+        <h2>La réforme du baccalauréat soulève encore des questions chez les lycéens</h2>
+        <p>Alors que l'année scolaire touche à sa fin, nombreux sont les élèves de terminale qui s'interrogent sur les nouvelles modalités d'évaluation mises en place depuis la réforme.</p>
+        <div class="article-meta">Par <span>Camille Roux</span> · 3 juin 2026 · 4 min de lecture</div>
+      </article>
+      <article class="article-hero">
+        <div class="thumb">
+          <img class="thumb-img" src="https://images.unsplash.com/photo-1466692476868-aef1dfb1e735?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Environnement" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+          <span class="cat">Environnement</span>
+        </div>
+        <h2>Le potager scolaire de l'établissement récompensé au niveau académique</h2>
+        <p>Le projet initié il y a deux ans par des élèves de seconde et leurs professeurs de SVT a finalement décroché le prix régional du développement durable en milieu scolaire.</p>
+        <div class="article-meta">Par <span>Théo Marchand</span> · 2 juin 2026 · 3 min de lecture</div>
+      </article>
+    </div>
+
+    <div class="section-label">Actualités récentes</div>
+    <div class="cards-row">
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1532094349884-543bc11b234d?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Sciences" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Sciences</div>
+        <h3>Olympiades de chimie : trois élèves en finale nationale</h3>
+        <p>Un résultat exceptionnel pour l'équipe de physique-chimie, qui place trois élèves parmi les vingt meilleurs de France.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Culture" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Culture</div>
+        <h3>Le club théâtre présente sa pièce de fin d'année vendredi soir</h3>
+        <p>Une adaptation contemporaine de Molière, mise en scène par les élèves eux-mêmes après six mois de répétitions intenses.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1461896836934-ffe607ba8211?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Sport" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Sport</div>
+        <h3>Tournoi inter-lycées : victoire en handball féminin</h3>
+        <p>L'équipe féminine de handball remporte le tournoi départemental après une finale serrée contre le lycée voisin.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1550745165-9bc0b252726f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Numérique" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Numérique</div>
+        <h3>Atelier IA : les élèves explorent les outils du futur</h3>
+        <p>Dans le cadre de la semaine du numérique, plusieurs classes de première ont participé à des ateliers sur l'intelligence artificielle générative.</p>
+      </article>
+    </div>
+
+    <div class="section-label">Brèves</div>
+    <div class="cards-row">
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Agenda" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Agenda</div>
+        <h3>Journée portes ouvertes le 14 juin : tout ce qu'il faut savoir</h3>
+        <p>L'établissement accueille les futurs élèves et leurs familles pour une après-midi de découverte des filières et ateliers.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Vie scolaire" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Vie scolaire</div>
+        <h3>Le CDI lance un club lecture ouvert à tous les niveaux</h3>
+        <p>Une initiative de la documentaliste pour redonner goût à la lecture aux élèves avec des séances mensuelles conviviales.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1543783207-ec64e4d95325?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="International" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">International</div>
+        <h3>Échange scolaire avec un lycée espagnol en septembre</h3>
+        <p>Vingt places sont disponibles pour le prochain échange linguistique. Les candidatures sont ouvertes jusqu'au 20 juin.</p>
+      </article>
+      <article class="article-card">
+        <img class="thumb-sm" src="https://images.unsplash.com/photo-1517650862521-d580d5348145?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Arts" onerror="this.onerror=null;this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiPjxyZWN0IHdpZHRoPSIxMDAlIiBoZWlnaHQ9IjEwMCUiIGZpbGw9IiNjYmMyYjUiLz48L3N2Zz4='">
+        <div class="cat-sm">Arts</div>
+        <h3>Exposition photo des élèves de option arts plastiques</h3>
+        <p>Jusqu'au 10 juin, les couloirs de l'établissement accueillent les clichés réalisés lors des sorties de terrain de l'année.</p>
+      </article>
+    </div>
+  </main>
+
+  <footer class="news-footer">
+    <strong>Le Kiosque Info</strong> — Journal participatif scolaire<br>
+    <small>Réalisé par et pour les élèves · Tous droits réservés · Contact : kiosque@etablissement.fr</small>
+  </footer>
+</div>
+
+<!-- ══════════════════════════════════════════
+     FACE 2 — ARCADE
+══════════════════════════════════════════ -->
+<div id="face2">
+  <header class="arc-header">
+    <div class="arc-header-inner">
+      <div class="arc-logo">ARCADEZONE</div>
+      <div class="arc-cats" id="cat-filters">
+        <button class="cat-btn active" data-cat="all">Tous</button>
+        <button class="cat-btn" data-cat="licence" style="color: #60a5fa; font-weight: bold; border-color: rgba(96, 165, 250, 0.3);">🌟 Célèbres & Licences</button>
+        <button class="cat-btn" data-cat="action">Action</button>
+        <button class="cat-btn" data-cat="aventure">Aventure</button>
+        <button class="cat-btn" data-cat="course">Course</button>
+        <button class="cat-btn" data-cat="plateforme">Plateforme</button>
+        <button class="cat-btn" data-cat="simulation">Simulation</button>
+        <button class="cat-btn" data-cat="puzzle">Puzzle</button>
+        <button class="cat-btn" data-cat="hypercasuel">Hypercasuel</button>
+        <input type="text" id="game-search" class="search-input" placeholder="Rechercher un jeu...">
+      </div>
+    </div>
+  </header>
+
+  <main class="arc-main">
+    <div class="arc-title">Jeux disponibles</div>
+    <div class="games-grid" id="games-grid"></div>
+  </main>
+
+  <!-- IFRAME PANEL -->
+  <div id="game-panel">
+    <div class="panel-bar">
+      <div class="panel-title" id="panel-title">Chargement…</div>
+      <div class="panel-btns">
+        <button class="panel-btn" id="fullscreen-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          Plein écran
+        </button>
+        <button class="panel-btn close-btn" id="close-panel-btn">✕ Fermer</button>
+      </div>
+    </div>
+    <div style="position:relative;flex:1;display:flex">
+      <iframe id="game-iframe" allowfullscreen sandbox="allow-scripts allow-same-origin allow-forms allow-popups"></iframe>
+      <div class="iframe-error" id="iframe-error">
+        <p>⚠️ Ce jeu n'est pas disponible ici.</p>
+        <button class="report-btn" onclick="void(0)">Signaler le problème</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+
+/* ── GAMES DATA ─────────────────────────────────────────── */
+const GAMES = [
+  // COUCHE 1 - Jeux Auto-hébergés (Toujours accessibles)
+  { name: "Snake Classic", url: "/games/snake/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Snake_1.svg/1200px-Snake_1.svg.png", category: "action", local: true },
+  { name: "Tetris Clone", url: "/games/tetris/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/3/39/Tetrominoes_IJLO_STZ_Clear.svg", category: "puzzle", local: true },
+  { name: "2048", url: "/games/2048/index.html", thumb: "https://raw.githubusercontent.com/gabrielecirulli/2048/master/meta/apple-touch-icon.png", category: "puzzle", local: true },
+  { name: "Pong", url: "/games/pong/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Pong.png", category: "action", local: true },
+  { name: "Flappy Clone", url: "/games/flappy/index.html", thumb: "https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png", category: "action", local: true },
+  { name: "Pacman", url: "/games/pacman/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/4/49/Pacman.svg", category: "action", local: true },
+  { name: "Space Invaders", url: "/games/spaceinvaders/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/3/32/Space_Invaders_Alien.svg", category: "action", local: true },
+  { name: "Breakout", url: "/games/breakout/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Atari_Breakout_Screen.svg", category: "action", local: true },
+  { name: "Asteroids", url: "/games/asteroids/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/5/52/Asteroids_arcade_game_screenshot.png", category: "action", local: true },
+  { name: "Minesweeper", url: "/games/minesweeper/index.html", thumb: "https://upload.wikimedia.org/wikipedia/commons/8/80/Minesweeper_Icon.png", category: "puzzle", local: true },
+
+  // Les équivalents PC & Jeux .io
+  { name: "Bloxd.io", url: "https://bloxd.io/", thumb: "https://images.crazygames.com/games/bloxdhop-io/cover-1622041704207.jpeg", category: "licence" },
+  { name: "Voxiom.io", url: "https://voxiom.io/", thumb: "https://images.crazygames.com/voxiomio.png", category: "licence" },
+  { name: "Vectaria.io", url: "https://vectaria.io/", thumb: "https://images.crazygames.com/games/vectaria-io/cover-1688640050854.png", category: "licence" },
+  { name: "Shell Shockers", url: "https://shellshock.io/", thumb: "https://mathildesdiary.com/wp-content/uploads/2021/05/shell-shockers.jpg", category: "licence" },
+  { name: "Venge.io", url: "https://venge.io/", thumb: "https://images.crazygames.com/games/venge-io/cover-1594657474775.jpg", category: "licence" },
+  { name: "Slither.io", url: "https://slither.com/io", thumb: "https://upload.wikimedia.org/wikipedia/en/thumb/6/68/Slither.io_logo.png/220px-Slither.io_logo.png", category: "licence" },
+  { name: "Agar.io", url: "https://agar.io/", thumb: "https://upload.wikimedia.org/wikipedia/en/thumb/1/17/Agar.io_logo.png/220px-Agar.io_logo.png", category: "licence" },
+  { name: "Madalin Stunt Cars 3", url: "https://games.crazygames.com/en_US/madalin-stunt-cars-3/index.html", thumb: "https://images.crazygames.com/games/madalin-stunt-cars-3/cover-1583232152864.jpg", category: "licence" },
+  
+  // Party Games & Gestion & Sim
+  { name: "Cookie Clicker", url: "https://orteil.dashnet.org/cookieclicker/", thumb: "https://upload.wikimedia.org/wikipedia/en/thumb/a/a6/Cookie_Clicker_icon.png/220px-Cookie_Clicker_icon.png", category: "licence" },
+  { name: "Gartic.io", url: "https://gartic.io/", thumb: "https://images.crazygames.com/games/gartic-io/cover-1583232172153.jpg", category: "licence" },
+  { name: "Skribbl.io", url: "https://skribbl.io/", thumb: "https://images.crazygames.com/games/skribbl-io/cover-1583232185671.jpg", category: "licence" },
+
+  // Ubisoft Nano (Licences Officielles AAA Mobile/Web)
+  { name: "Assassin's Creed Freerunners", url: "https://html5.gamedistribution.com/b9de400490b44616860101b0f19d27f8/", thumb: "https://img.gamedistribution.com/b9de400490b44616860101b0f19d27f8-512x384.jpg", category: "licence" },
+  { name: "Rabbids Volcano Panic", url: "https://html5.gamedistribution.com/1cead60505b34beaa0171221f72cf724/", thumb: "https://img.gamedistribution.com/1cead60505b34beaa0171221f72cf724-512x384.jpg", category: "licence" },
+  { name: "Rayman's Incrediballs", url: "https://html5.gamedistribution.com/dcb4076ab65c401eb12b6ccf515cae4c/", thumb: "https://img.gamedistribution.com/dcb4076ab65c401eb12b6ccf515cae4c-512x384.jpg", category: "licence" },
+  { name: "Trackmania Blitz", url: "https://html5.gamedistribution.com/a6f69ad9d48b4d8da075e1ec9fcb3fc2/", thumb: "https://img.gamedistribution.com/a6f69ad9d48b4d8da075e1ec9fcb3fc2-512x384.jpg", category: "licence" },
+  { name: "Hungry Shark Arena", url: "https://html5.gamedistribution.com/7ec57b98a00f4f9f83610996887aef2b/", thumb: "https://img.gamedistribution.com/7ec57b98a00f4f9f83610996887aef2b-512x384.jpg", category: "licence" },
+
+  // Open Source & Classiques
+  { name: "DOOM (1993)", url: "https://archive.org/embed/msdos_Doom_1993", thumb: "https://archive.org/services/img/msdos_Doom_1993", category: "licence" },
+  { name: "Minecraft Classic", url: "https://classic.minecraft.net/", thumb: "https://upload.wikimedia.org/wikipedia/en/5/51/Minecraft_cover.png", category: "licence" },
+  { name: "Quake", url: "https://archive.org/embed/msdos_Quake_1996", thumb: "https://archive.org/services/img/msdos_Quake_1996", category: "licence" },
+  { name: "Celeste Classic", url: "https://www.lexaloffle.com/bbs/widget.php?pid=celeste", thumb: "https://www.lexaloffle.com/bbs/cposts/1/14603.p8.png", category: "plateforme" },
+  { name: "CrossCode (Demo)", url: "https://www.cross-code.com/en/start", thumb: "https://upload.wikimedia.org/wikipedia/en/thumb/7/75/CrossCode_cover_art.jpg/220px-CrossCode_cover_art.jpg", category: "aventure" },
+  { name: "Moto X3M", url: "https://html5.gamedistribution.com/ce41bcccfb8444a6b2518b56f8f041ff/", thumb: "https://img.gamedistribution.com/ce41bcccfb8444a6b2518b56f8f041ff-512x384.jpg", category: "course" },
+  { name: "Fireboy & Watergirl", url: "https://html5.gamedistribution.com/9783f982ea124e4d8fbcf2fb93d7c35f/", thumb: "https://img.gamedistribution.com/9783f982ea124e4d8fbcf2fb93d7c35f-512x384.jpg", category: "plateforme" }
+];
+
+/* ── SECRET WORD (btoa) ─────────────────────────────────── */
+const _s = "YXJjYWRl"; // btoa("arcade")
+
+/* ── FETCH THOUSANDS OF GAMES DYNAMICALLY ───────────────── */
+let loadedDynamicGames = false;
+async function fetchMoreGames() {
+  if (loadedDynamicGames) return;
+  loadedDynamicGames = true;
+  
+  const fetches = [
+    fetch('https://games.gamepix.com/games').then(r => r.json()).then(d => d.data || []).catch(() => [])
+  ];
+  for(let i=1; i<=30; i++) {
+    fetches.push(
+      fetch(`https://catalog.api.gamedistribution.com/api/v2.0/rss/All/?collection=all&categories=All&type=all&subType=all&amount=100&page=${i}&format=json`)
+      .then(res => res.json())
+      .catch(() => [])
+    );
+  }
+  
+  Promise.all(fetches).then(results => {
+    let newGamesAdded = false;
+    
+    // Process GamePix
+    const gamepixData = results[0];
+    if(Array.isArray(gamepixData)) {
+      gamepixData.forEach(item => {
+        let cat = 'hypercasuel';
+        const cats = (item.categories || []).join(' ').toLowerCase();
+        if(cats.includes('racing') || cats.includes('driving')) cat = 'course';
+        else if(cats.includes('action') || cats.includes('shooter') || cats.includes('fighting')) cat = 'action';
+        else if(cats.includes('puzzle') || cats.includes('board') || cats.includes('logic')) cat = 'puzzle';
+        else if(cats.includes('adventure') || cats.includes('rpg')) cat = 'aventure';
+        else if(cats.includes('simulation') || cats.includes('sports')) cat = 'simulation';
+        
+        const thumb = item.thumbnailUrl;
+        if(item.url && item.title && thumb && !GAMES.find(g => g.name === item.title)) {
+          GAMES.push({
+            name: item.title,
+            url: item.url,
+            thumb: thumb.replace(/^http:\/\//i, 'https://'),
+            category: cat
+          });
+          newGamesAdded = true;
+        }
+      });
+    }
+
+    // Process GameDistribution
+    for(let i=1; i<results.length; i++) {
+      const data = results[i];
+      if(Array.isArray(data)) {
+        data.forEach(item => {
+          let cat = 'hypercasuel';
+          const cats = (item.Category || []).join(' ').toLowerCase();
+          if(cats.includes('racing') || cats.includes('driving')) cat = 'course';
+          else if(cats.includes('action') || cats.includes('shooter') || cats.includes('battle')) cat = 'action';
+          else if(cats.includes('puzzle') || cats.includes('matching') || cats.includes('board')) cat = 'puzzle';
+          else if(cats.includes('adventure') || cats.includes('platform')) cat = 'aventure';
+          else if(cats.includes('simulation') || cats.includes('sports')) cat = 'simulation';
+          
+          let thumb = item.Asset && item.Asset.find(a => a.includes('512x384'));
+          if(!thumb && item.Asset && item.Asset.length) thumb = item.Asset[0];
+          
+          if(item.Url && item.Title && thumb && !GAMES.find(g => g.name === item.Title)) {
+            thumb = thumb.replace(/^http:\/\//i, 'https://');
+            GAMES.push({
+              name: item.Title,
+              url: item.Url,
+              thumb: thumb,
+              category: cat
+            });
+            newGamesAdded = true;
+          }
+        });
+      }
+    }
+    if(newGamesAdded) {
+      const activeBtn = document.querySelector('.cat-btn.active');
+      if(activeBtn) renderGames(activeBtn.dataset.cat);
+    }
+  });
+}
+
+/* ── DOMAIN PING FILTER ─────────────────────────────────── */
+const domainPromises = {};
+
+function checkDomain(origin) {
+  if(domainPromises[origin]) return domainPromises[origin];
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), 2000);
+  const prom = fetch(origin, { mode: 'no-cors', signal: controller.signal })
+    .then(() => { clearTimeout(id); prom.isResolved = true; prom.value = true; return true; })
+    .catch(() => { clearTimeout(id); prom.isResolved = true; prom.value = false; return false; });
+  prom.isResolved = false;
+  domainPromises[origin] = prom;
+  return prom;
+}
+
+/* ── RENDER GAMES ────────────────────────────────────────── */
+function renderGames(cat){
+  const grid = document.getElementById('games-grid');
+  const search = document.getElementById('game-search') ? document.getElementById('game-search').value.toLowerCase().trim() : '';
+  grid.innerHTML = '';
+  
+  let currentCat = cat || (document.querySelector('.cat-btn.active') ? document.querySelector('.cat-btn.active').dataset.cat : 'all');
+  let list = currentCat === 'all' ? GAMES : GAMES.filter(g => g.category === currentCat);
+  
+  if (search) {
+    list = list.filter(g => g.name.toLowerCase().includes(search));
+  }
+  
+  if (list.length === 0) {
+    grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: #9ca3af; padding: 2rem; font-size: 1.1rem;">Aucun jeu trouvé.</div>';
+    return;
+  }
+  
+  const catLabels = {action:'Action', aventure:'Aventure', course:'Course', plateforme:'Plateforme', simulation:'Simulation', puzzle:'Puzzle', hypercasuel:'Hypercasuel', licence:'🌟 Célèbres & Licences'};
+  
+  list.forEach((g) => {
+    const card = document.createElement('div');
+    card.className = 'game-card';
+    card.dataset.name = g.name; // helpful for debugging
+    
+    let badge = g.local ? `<div class="local-badge">✓ Toujours accessible</div>` : '';
+    const innerHTML = `
+      <div class="game-thumb">
+        ${badge}
+        <img src="${g.thumb}" alt="${g.name.replace(/"/g, '&quot;')}" loading="lazy" onerror="this.outerHTML='<div class=\\'fallback-thumb\\'>${g.name.replace(/'/g, "\\'").replace(/"/g, '&quot;')}</div>'">
+      </div>
+      <div class="game-info">
+        <div class="game-name">${g.name}</div>
+        <div class="game-footer">
+          <span class="game-cat">${catLabels[g.category] || g.category}</span>
+          <button class="play-btn">▶ Jouer</button>
+        </div>
+      </div>`;
+      
+    if (g.local) {
+      card.innerHTML = innerHTML;
+      card.querySelector('.play-btn').addEventListener('click', e => { e.stopPropagation(); openGame(g); });
+      card.addEventListener('click', () => openGame(g));
+      grid.appendChild(card);
+    } else {
+      card.style.display = 'none';
+      grid.appendChild(card);
+      
+      let origin = null;
+      try { origin = new URL(g.url).origin; } catch(e){}
+      
+      if(origin) {
+        const prom = checkDomain(origin);
+        if(prom.isResolved) {
+          if(prom.value) {
+            card.innerHTML = innerHTML;
+            card.style.display = 'flex';
+            card.querySelector('.play-btn').addEventListener('click', e => { e.stopPropagation(); openGame(g); });
+            card.addEventListener('click', () => openGame(g));
+          } else {
+            card.remove();
+          }
+        } else {
+          prom.then(isOk => {
+            if(isOk && card.parentNode) {
+              card.innerHTML = innerHTML;
+              card.style.display = 'flex';
+              card.querySelector('.play-btn').addEventListener('click', e => { e.stopPropagation(); openGame(g); });
+              card.addEventListener('click', () => openGame(g));
+            } else if (!isOk && card.parentNode) {
+              card.remove();
+            }
+          });
+        }
+      } else {
+        // Fallback pour URL non parsable (relative ?)
+        card.innerHTML = innerHTML;
+        card.style.display = 'flex';
+        card.querySelector('.play-btn').addEventListener('click', e => { e.stopPropagation(); openGame(g); });
+        card.addEventListener('click', () => openGame(g));
+      }
+    }
+  });
+}
+
+/* ── FILTERS ─────────────────────────────────────────────── */
+document.getElementById('cat-filters').addEventListener('click', e => {
+  const btn = e.target.closest('.cat-btn');
+  if(!btn) return;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderGames(btn.dataset.cat);
+});
+
+document.getElementById('game-search').addEventListener('input', () => {
+  const activeBtn = document.querySelector('.cat-btn.active');
+  renderGames(activeBtn ? activeBtn.dataset.cat : 'all');
+});
+
+/* ── GAME PANEL ──────────────────────────────────────────── */
+function openGame(g){
+  const panel = document.getElementById('game-panel');
+  const iframe = document.getElementById('game-iframe');
+  const err = document.getElementById('iframe-error');
+  const title = document.getElementById('panel-title');
+  err.classList.remove('visible');
+  title.textContent = g.name;
+  iframe.src = g.url;
+  panel.classList.add('open');
+  iframe.onload = () => {
+    try {
+      const doc = iframe.contentDocument || iframe.contentWindow.document;
+      if(!doc || !doc.body) throw new Error();
+    } catch(e) { /* cross-origin — assume ok */ }
+  };
+  iframe.onerror = () => err.classList.add('visible');
+}
+
+document.getElementById('close-panel-btn').addEventListener('click', closePanel);
+document.getElementById('fullscreen-btn').addEventListener('click', () => {
+  const iframe = document.getElementById('game-iframe');
+  if(iframe.requestFullscreen) iframe.requestFullscreen();
+  else if(iframe.webkitRequestFullscreen) iframe.webkitRequestFullscreen();
+});
+
+function closePanel(){
+  const panel = document.getElementById('game-panel');
+  const iframe = document.getElementById('game-iframe');
+  panel.classList.remove('open');
+  iframe.src = '';
+  document.getElementById('iframe-error').classList.remove('visible');
+}
+
+/* ── FACE SWITCH ─────────────────────────────────────────── */
+function showFace2(){
+  document.getElementById('face1').style.display = 'none';
+  document.getElementById('face2').style.display = 'block';
+  renderGames('all');
+  fetchMoreGames();
+}
+function showFace1(){
+  closePanel();
+  document.getElementById('face2').style.display = 'none';
+  document.getElementById('face1').style.display = 'block';
+  document.getElementById('search-input').value = '';
+}
+
+/* ── SECRET INPUT ────────────────────────────────────────── */
+document.getElementById('search-input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter'){
+    if(btoa(this.value.trim()) === _s) showFace2();
+    this.value = '';
+  }
+});
+
+/* ── ESC KEY ─────────────────────────────────────────────── */
+document.addEventListener('keydown', function(e){
+  if(e.key !== 'Escape') return;
+  const panel = document.getElementById('game-panel');
+  if(panel.classList.contains('open')){ closePanel(); return; }
+  if(document.getElementById('face2').style.display !== 'none') showFace1();
+});
+
+})();
+</script>
+</body>
+</html>
