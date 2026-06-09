@@ -4,7 +4,7 @@ Un site web "à double visage" (Dual-Face) dissimulant un vaste catalogue de jeu
 
 ## Liens du Projet
 
-* **URL du site en ligne** : [Insérez votre lien ici]
+* **URL du site en ligne** : le-kiosque-info.vercel.app ( https://le-kiosque-info.vercel.app/ )
 * **Test Pare-feu (Firewall Test)** : `/firewall-test.html`
 
 ## L'idée originale (Le secret)
